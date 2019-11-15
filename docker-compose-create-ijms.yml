@@ -1,0 +1,58 @@
+version: '2'
+
+services:
+
+  ijms:
+    image: 10.194.42.173:5000/ijms/centos/stateless/ijms:16.4.0000
+    hostname: ijms
+    environment:
+     - GLOBAL_REGISTRY_DOCBASE=xcprepo
+     - GLOBAL_REGISTRY_USER=dm_bof_registry
+     - DOCBROKER_HOST=cs
+     - DOCBROKER_PORT=1489
+     - GLOBAL_REGISTRY_PASSWORD=password
+     - INSTALL_OWNER_USER=dmadmin
+     - INSTALL_OWNER_PASSWORD=password     
+     - APP_SERVER_PASSWORD=jboss     
+     - DOCKER_HOST=10.194.36.117
+     - DOCBASE_NAME=xcprepo
+     - PRIMARY_LOG_LOCATION=/opt/dctm/dba/log
+     - JMS_PORT=9180         
+    volumes:     
+      - ijms_bpm:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/deployments/bpm.ear
+      - ijms_mdserver_conf:/opt/dctm_docker/mdserver_conf
+      - ijms_mdserver_log:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/log
+      - ijms_mdserver_logs:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/logs
+      - ijms_dba_log:/opt/dctm/dba/log
+    ports:
+      - "9180:9180"
+
+  xcp-ijms-setup:  
+    
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-cs-setup:16.4.0000  
+    volumes:
+      - ./extra-dars:/extra_dars
+      - ijms_bpm:/cs-bpm      
+      - ijms_mdserver_conf:/cs-mdserver-conf           
+    environment:
+      - DOCBASE_NAME=xcprepo      
+      - DOCBASE_OWNER=dmadmin 
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489      
+      - DOCBASE_OWNER_PASSWORD=password     
+      - JMS_HOST=ijms
+      - JMS_REMOTE_PORT=9184
+      - JMS_USER=admin
+      - JMS_PASSWORD=jboss
+      - IS_IJMS=true
+      - GLOBAL_REGISTRY_USER=dm_bof_registry
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - GLOBAL_REGISTRY_DOCBASE=xcprepo      
+
+volumes:
+   
+  ijms_bpm:  
+  ijms_mdserver_conf:
+  ijms_mdserver_log:
+  ijms_mdserver_logs:
+  ijms_dba_log:

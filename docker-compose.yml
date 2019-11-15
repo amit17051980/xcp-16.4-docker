@@ -1,0 +1,315 @@
+version: '2'
+
+services:
+
+  apphost:
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-apphost:16.4.0000
+    ports:
+      - "8000:8080"
+      #- "8001:8443"
+    volumes:
+      - apphost_CustomConf:/opt/tomcat/CustomConf
+      - apphost_ctsws_config:/opt/tomcat/ctsws_config
+      - apphost_logs:/opt/tomcat/logs
+      - apphost_webapps:/opt/tomcat/webapps
+    environment:
+      - DOCBASE_NAME=xcprepo
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489
+      - GLOBAL_REGISTRY_USER=dm_bof_registry
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - BAM_SERVER_PROTOCOL=http
+      - BAM_SERVER_HOST=bam
+      - BAM_SERVER_PORT=8080
+      - BAM_SERVER_CONTEXT=bam-server
+      #- CTS_ADMIN_DOMAIN=
+      #- CTS_ADMIN_USER=admin
+      - TOMCAT_ADMIN_USER=admin
+      - TOMCAT_ADMIN_PWD=password
+      #- SSL_ENABLED=false
+      #- SSL_KEY_STORE_FILE=
+      #- SSL_KEY_STORE_PWD=
+      #- SSL_KEY_ALIAS=
+      #- SSL_KEY_PWD=
+      #- SSL_KEY_STORE_TYPE=
+      #- CLUSTER_ENABLED=false
+      #- CLUSTER_TYPE=
+      #- CLUSTER_NODE_NAME=
+      #- CLUSTER_ADDRESS=
+      #- CLUSTER_PORT=
+      #- CLUSTER_UNICAST_SIBLINGS=
+
+  bam:
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-bam:16.4.0000
+    depends_on:
+      - bam-db
+    ports:
+      - "8200:8080"
+      #- "8201:8443"
+    volumes:
+      - bam_CustomConf:/opt/tomcat/CustomConf
+      - bam_LogConf:/opt/tomcat/LogConf
+      - bam_logs:/opt/tomcat/logs
+    environment:
+      - DOCBASE_NAME=xcprepo
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489
+      - GLOBAL_REGISTRY_USER=dm_bof_registry
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - DOCBASE_ADMIN_USER=dmadmin
+      - DOCBASE_ADMIN_PASSWORD=password
+      #- DOCBASE_ADMIN_DOMAIN=
+      - BAM_PASSWORD_ENCRYPTED=false
+      - BAM_DB_TYPE=postgres
+      - BAM_DB_HOST=bam-db
+      - BAM_DB_PORT=5432
+      - BAM_DB_NAME=bamdata
+      - BAM_DB_USER=bamdba
+      - BAM_DB_PASSWORD=password
+      - BAM_HA_ENABLED=false
+      - TOMCAT_ADMIN_USER=admin
+      - TOMCAT_ADMIN_PWD=password
+      #- SSL_ENABLED=false
+      #- SSL_KEY_STORE_FILE=
+      #- SSL_KEY_STORE_PWD=
+      #- SSL_KEY_ALIAS=
+      #- SSL_KEY_PWD=
+      #- SSL_KEY_STORE_TYPE=
+
+  bam-db:
+    image: postgres:9.4
+    ports:
+      - "54321:5432"
+    volumes:
+      - bam-db_data:/var/lib/postgresql/data
+
+  bps:
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-bps:16.4.0000
+    ports:
+      - "8100:8080"
+      #- "8101:8443"
+    volumes:
+      - bps_CustomConf:/opt/tomcat/CustomConf
+      - bps_LogConf:/opt/tomcat/LogConf
+      - bps_logs:/opt/tomcat/logs
+      - bps_msgstore:/var/documentum/msgstore
+    environment:
+      - DOCBASE_NAME=xcprepo
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489
+      - GLOBAL_REGISTRY_USER=dm_bof_registry
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - DOCBASE_ADMIN_USER=dmadmin
+      - DOCBASE_ADMIN_PASSWORD=password
+      #- DOCBASE_ADMIN_DOMAIN=
+      - BPS_HA_ENABLED=false
+      - BPS_INSTANCE_NAME=bps1
+      - TOMCAT_ADMIN_USER=admin
+      - TOMCAT_ADMIN_PWD=password
+      #- SSL_ENABLED=false
+      #- SSL_KEY_STORE_FILE=
+      #- SSL_KEY_STORE_PWD=
+      #- SSL_KEY_ALIAS=
+      #- SSL_KEY_PWD=
+      #- SSL_KEY_STORE_TYPE=
+
+  xda:
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-xda:16.4.0000
+    ports:
+      - "7000:7000"
+    volumes:
+      - xda_catalog:/opt/xDA/catalog
+      - xda_conf:/opt/xDA/config
+      - xda_logs:/opt/xDA/logs
+    #environment:
+      #- ADMIN_PASSWORD=
+      #- SSL_ENABLED=false
+      #- SSL_KEY_STORE_FILE=
+      #- SSL_KEY_STORE_PWD=
+      #- SSL_KEY_ALIAS=
+      #- SSL_KEY_PWD=
+      #- SSL_KEY_STORE_TYPE=
+  
+  xplore:
+    image: 10.194.42.173:5000/xplore/ubuntu/stateless/xplore:16.4.0000
+    hostname: xplore
+    ports:
+      - "9300:9300"
+    volumes:
+      - xplore:/root/xPlore/rtdata
+
+  indexagent:
+    image: 10.8.176.180:5000/indexagent/ubuntu/stateless/indexagent:16.4.0000
+    hostname: indexagent
+    ports:
+      - "9200:9200"
+    environment:
+      - primary_addr=xplore
+      - docbase_name=xcprepo
+      - docbase_user=dmadmin
+      - docbase_password=password
+      - broker_host=cs
+      - broker_port=1489
+      - registry_name=xcprepo
+      - registry_user=dm_bof_registry
+      - registry_password=password
+    depends_on:
+      - xplore
+    volumes_from:
+      - xplore
+  cis:
+    image: 10.194.42.173:5000/cis/ubuntu/stateless/cis:16.4.0000
+    hostname: cis
+    ports:
+      - "8061:8061"
+      - "8079:8079"
+    volumes:
+      - cis_config:/root/dctm/CIS/config/
+      - cis_docexclusion:/root/dctm/CIS/repodata/docexclusion/
+      - cis_logs:/root/dctm/CIS/logs/
+    environment:
+      - skip_dar=false
+      - docbase_name=xcprepo
+      - docbase_user=dmadmin
+      - docbase_password=password
+      - docbase_domain=
+      - broker_host=cs
+      - broker_port=1489
+      - global_registry_repository_name=xcprepo
+      - global_registry_user=dm_bof_registry
+      - global_registry_password=password  
+
+  cs:
+    image: 10.194.42.173:5000/contentserver/centos/stateless/cs:16.4.0000
+    hostname: cs
+    ports:
+      - "1689:1689"
+      - "1690:1690"
+      - "50000:50000"
+      - "50001:50001"
+      - "9080:9080"
+      - "9081:9081"
+      - "9082:9082"
+    volumes:
+      - cs_odbc:/opt/dctm/odbc
+      - cs_data:/opt/dctm/data
+      - cs_dba:/opt/dctm/dba
+      - cs_share:/opt/dctm/share
+      - cs_dfc:/opt/dctm/config
+      - cs_xhive_storage:/opt/dctm/xhive_storage
+      - cs_XhiveConnector:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/deployments/XhiveConnector.ear
+      - cs_bpm:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/deployments/bpm.ear
+      - cs_mdserver_conf:/opt/dctm/mdserver_conf
+      - cs_mdserver_log:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/log
+      - cs_mdserver_logs:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/logs
+      - cs_thumbnail_server_conf:/opt/dctm/product/7.3/thumbsrv/conf
+      - cs_thumbnail_server_webinf:/opt/dctm/product/7.3/thumbsrv/container/webapps/thumbsrv/WEB-INF
+    privileged: true
+    depends_on:
+      - cs-db
+    environment:
+      - HIGH_VOLUME_SERVER_LICENSE=
+      - TRUSTED_LICNESE=
+      - STORAGEAWARE_LICENSE=
+      - XMLSTORE_LICENSE=
+      - SNAPLOCKSTORE_LICENSE=
+      - RPS_LICENSE=
+      - FED_RECD_SERVICE_LICENSE=
+      - RECORD_MANAGER_LICENSE=
+      - PRM_LICENSE=
+      - ROOT_PASSWORD=password
+      - INSTALL_OWNER_PASSWORD=password
+      - INSTALL_OWNER=dmadmin
+      - DOCBASE_PASSWORD=password
+      - DOCKER_HOST=10.194.36.117
+      - DATABASE_HOST=cs-db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=password
+      - DATABASE_SERVER_PORT=5432  
+      - DOCBASE_ID=45321      
+      - DOCBASE_NAME=xcprepo
+      - USE_EXISTING_DATABASE_ACCOUNT=false      
+      - INDEXSPACE_NAME=dm_repo_docbase      
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - AEK_ALGORITHM=AES_256_CBC
+      - AEK_PASSPHRASE=password
+      - AEK_NAME=CSaek
+      - ENABLE_LOCKBOX=true
+      - LOCKBOX_FILE_NAME=lockbox.lb
+      - LOCKBOX_PASSPHRASE=Password@123
+      - USE_EXISTING_AEK_LOCKBOX=false
+      - CONFIGURE_THUMBNAIL_SERVER=NO
+      - EXTERNAL_DOCBROKER_PORT=1689
+      - CONTENTSERVER_PORT=50000      
+      - APP_SERVER_PASSWORD=jboss
+  cs-db:
+    image: postgres:9.4
+    ports:
+      - "54320:5432"
+    volumes:
+      - cs-db_data:/var/lib/postgresql/data
+
+  ijms:
+    image: 10.194.42.173:5000/ijms/centos/stateless/ijms:16.4.0000
+    hostname: ijms
+    environment:
+     - GLOBAL_REGISTRY_DOCBASE=xcprepo
+     - GLOBAL_REGISTRY_USER=dm_bof_registry
+     - DOCBROKER_HOST=cs
+     - DOCBROKER_PORT=1489
+     - GLOBAL_REGISTRY_PASSWORD=password
+     - INSTALL_OWNER_USER=dmadmin
+     - INSTALL_OWNER_PASSWORD=password     
+     - APP_SERVER_PASSWORD=jboss     
+     - DOCKER_HOST=10.194.36.117
+     - DOCBASE_NAME=xcprepo
+     - PRIMARY_LOG_LOCATION=/opt/dctm/dba/log
+     - JMS_PORT=9180      
+    ports:
+     - 9180:9180         
+    volumes:
+      - ijms_bpm:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/deployments/bpm.ear
+      - ijms_mdserver_conf:/opt/dctm_docker/mdserver_conf
+      - ijms_mdserver_log:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/log
+      - ijms_mdserver_logs:/opt/dctm_docker/jms/wildfly9.0.1/server/DctmServer_MethodServerHA1/logs
+      - ijms_dba_log:/opt/dctm/dba/log
+
+volumes:
+  apphost_CustomConf:
+  apphost_ctsws_config:
+  apphost_logs:
+  apphost_webapps:
+  bam_CustomConf:
+  bam_LogConf:
+  bam_logs:
+  bam-db_data:
+  bps_CustomConf:
+  bps_LogConf:
+  bps_logs:
+  bps_msgstore:
+  xda_catalog:
+  xda_conf:
+  xda_logs:
+  xplore:
+  cis_config:
+  cis_docexclusion:
+  cis_logs:
+  cs_odbc:
+  cs_data:
+  cs_dba:
+  cs_share:
+  cs_dfc:
+  cs_xhive_storage:
+  cs_XhiveConnector:
+  cs_bpm:
+  cs_mdserver_conf:
+  cs_mdserver_log:
+  cs_mdserver_logs:
+  cs_thumbnail_server_conf:
+  cs_thumbnail_server_webinf:
+  cs-db_data:
+  ijms_bpm:  
+  ijms_mdserver_conf:
+  ijms_mdserver_log:
+  ijms_mdserver_logs:
+  ijms_dba_log:

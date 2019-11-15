@@ -1,0 +1,8 @@
+*.tar
+cs/*.tar
+xcp-apphost/*.tar
+xcp-bam/*.tar
+xcp-bps/*.tar
+xcp-cs-setup/*.tar
+xcp-xda/*.tar
+xcp-xda-tools/*.tar
