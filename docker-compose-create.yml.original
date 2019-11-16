@@ -1,0 +1,117 @@
+version: '2'
+
+services:
+
+  bam-db:
+    image: postgres:9.4
+    volumes:
+      - ./bam-db:/docker-entrypoint-initdb.d
+      - bam-db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - BAM_DB_NAME=bamdata
+      - BAM_DB_USER=bamdba
+      - BAM_DB_PASSWORD=password
+
+  
+  cs:
+    image: 10.194.42.173:5000/contentserver/centos/stateless/cs:16.4.0000
+    hostname: cs
+    volumes:
+      - cs_odbc:/opt/dctm/odbc
+      - cs_data:/opt/dctm/data
+      - cs_dba:/opt/dctm/dba
+      - cs_share:/opt/dctm/share
+      - cs_dfc:/opt/dctm/config
+      - cs_xhive_storage:/opt/dctm/xhive_storage
+      - cs_XhiveConnector:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/deployments/XhiveConnector.ear 
+      - cs_bpm:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/deployments/bpm.ear     
+      - cs_mdserver_conf:/opt/dctm/mdserver_conf
+      - cs_mdserver_log:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/log
+      - cs_mdserver_logs:/opt/dctm/wildfly9.0.1/server/DctmServer_MethodServer/logs
+      - cs_thumbnail_server_conf:/opt/dctm/product/7.3/thumbsrv/conf
+      - cs_thumbnail_server_webinf:/opt/dctm/product/7.3/thumbsrv/container/webapps/thumbsrv/WEB-INF
+    privileged: true
+    depends_on:
+      - cs-db
+    environment:
+      - HIGH_VOLUME_SERVER_LICENSE=
+      - TRUSTED_LICNESE=
+      - STORAGEAWARE_LICENSE=
+      - XMLSTORE_LICENSE=
+      - SNAPLOCKSTORE_LICENSE=
+      - RPS_LICENSE=
+      - FED_RECD_SERVICE_LICENSE=
+      - RECORD_MANAGER_LICENSE=
+      - PRM_LICENSE=
+      - ROOT_PASSWORD=password
+      - INSTALL_OWNER_PASSWORD=password
+      - INSTALL_OWNER=dmadmin
+      - DOCBASE_PASSWORD=password
+      - DOCKER_HOST=10.194.36.117
+      - DATABASE_HOST=cs-db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=password
+      - DATABASE_SERVER_PORT=5432  
+      - DOCBASE_ID=45321      
+      - DOCBASE_NAME=xcprepo
+      - USE_EXISTING_DATABASE_ACCOUNT=false      
+      - INDEXSPACE_NAME=dm_repo_docbase      
+      - GLOBAL_REGISTRY_PASSWORD=password
+      - AEK_ALGORITHM=AES_256_CBC
+      - AEK_PASSPHRASE=password
+      - AEK_NAME=CSaek
+      - ENABLE_LOCKBOX=true
+      - LOCKBOX_FILE_NAME=lockbox.lb
+      - LOCKBOX_PASSPHRASE=Password@123
+      - USE_EXISTING_AEK_LOCKBOX=false
+      - CONFIGURE_THUMBNAIL_SERVER=NO
+      - EXTERNAL_DOCBROKER_PORT=1689
+      - CONTENTSERVER_PORT=50000      
+      - APP_SERVER_PASSWORD=jboss
+  cs-db:
+    image: postgres:9.4
+    volumes:
+      - ./cs-db:/docker-entrypoint-initdb.d
+      - cs-db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - DOCBASE_NAME=xcprepo
+
+  xcp-cs-setup:   
+    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-cs-setup:16.4.0000    
+    volumes:
+      - ./extra-dars:/extra_dars
+      - cs_bpm:/cs-bpm
+      - cs_dba:/cs-dba:ro
+      - cs_mdserver_conf:/cs-mdserver-conf
+    environment:
+      - DOCBASE_NAME=xcprepo
+      - DOCBASE_OWNER=dmadmin
+      - DOCBASE_OWNER_PASSWORD=password
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489
+      - JMS_HOST=cs
+      - JMS_REMOTE_PORT=9084
+      - JMS_PORT=9080
+      - JMS_USER=admin
+      - JMS_PASSWORD=jboss
+      - DOCKER_HOST=10.194.36.117
+  
+volumes:
+  bam-db_data:
+  cs_odbc:
+  cs_data:
+  cs_dba:
+  cs_share:
+  cs_dfc:
+  cs_xhive_storage:
+  cs_XhiveConnector:  
+  cs_mdserver_conf:
+  cs_mdserver_log:
+  cs_mdserver_logs:
+  cs_thumbnail_server_conf:
+  cs_thumbnail_server_webinf:
+  cs-db_data:  
+  cs_bpm:
+  
