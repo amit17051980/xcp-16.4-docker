@@ -3,7 +3,7 @@ version: '2'
 services:
 
   apphost:
-    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-apphost:16.4.0000
+    image: xcp/centos/stateless/xcp-apphost:16.4.0000
     ports:
       - "8000:8080"
       #- "8001:8443"
@@ -40,7 +40,7 @@ services:
       #- CLUSTER_UNICAST_SIBLINGS=
 
   bam:
-    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-bam:16.4.0000
+    image: xcp/centos/stateless/xcp-bam:16.4.0000.0038
     depends_on:
       - bam-db
     ports:
@@ -78,13 +78,17 @@ services:
 
   bam-db:
     image: postgres:9.4
-    ports:
-      - "54321:5432"
     volumes:
+      - ./bam-db:/docker-entrypoint-initdb.d
       - bam-db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - BAM_DB_NAME=bamdata
+      - BAM_DB_USER=bamdba
+      - BAM_DB_PASSWORD=password
 
   bps:
-    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-bps:16.4.0000
+    image: xcp/centos/stateless/xcp-bps:16.4.0000.0037
     ports:
       - "8100:8080"
       #- "8101:8443"
@@ -114,7 +118,7 @@ services:
       #- SSL_KEY_STORE_TYPE=
 
   xda:
-    image: 10.194.42.173:5000/xcp/centos/stateless/xcp-xda:16.4.0000
+    image: xcp/centos/stateless/xcp-xda:16.4.0000.0072
     ports:
       - "7000:7000"
     volumes:
@@ -131,7 +135,7 @@ services:
       #- SSL_KEY_STORE_TYPE=
   
   xplore:
-    image: 10.194.42.173:5000/xplore/ubuntu/stateless/xplore:16.4.0000
+    image: xplore_ubuntu:16.4.0000.0197
     hostname: xplore
     ports:
       - "9300:9300"
@@ -139,7 +143,7 @@ services:
       - xplore:/root/xPlore/rtdata
 
   indexagent:
-    image: 10.8.176.180:5000/indexagent/ubuntu/stateless/indexagent:16.4.0000
+    image: indexagent_ubuntu:16.4.0000.0197
     hostname: indexagent
     ports:
       - "9200:9200"
@@ -158,7 +162,7 @@ services:
     volumes_from:
       - xplore
   cis:
-    image: 10.194.42.173:5000/cis/ubuntu/stateless/cis:16.4.0000
+    image: cis_ubuntu:16.4.0000.0038
     hostname: cis
     ports:
       - "8061:8061"
@@ -180,7 +184,7 @@ services:
       - global_registry_password=password  
 
   cs:
-    image: 10.194.42.173:5000/contentserver/centos/stateless/cs:16.4.0000
+    image: contentserver/centos/stateless/cs:16.4.0000
     hostname: cs
     ports:
       - "1689:1689"
@@ -221,7 +225,7 @@ services:
       - INSTALL_OWNER_PASSWORD=password
       - INSTALL_OWNER=dmadmin
       - DOCBASE_PASSWORD=password
-      - DOCKER_HOST=10.194.36.117
+      - DOCKER_HOST=192.168.0.57
       - DATABASE_HOST=cs-db
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password
@@ -244,13 +248,34 @@ services:
       - APP_SERVER_PASSWORD=jboss
   cs-db:
     image: postgres:9.4
-    ports:
-      - "54320:5432"
     volumes:
+      - ./cs-db:/docker-entrypoint-initdb.d
       - cs-db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - DOCBASE_NAME=xcprepo
+  xcp-cs-setup:
+    image: xcp/centos/stateless/xcp-cs-setup:16.4.0000.0072    
+    volumes:
+      - ./extra-dars:/extra_dars
+      - cs_bpm:/cs-bpm
+      - cs_dba:/cs-dba:ro
+      - cs_mdserver_conf:/cs-mdserver-conf
+    environment:
+      - DOCBASE_NAME=xcprepo
+      - DOCBASE_OWNER=dmadmin
+      - DOCBASE_OWNER_PASSWORD=password
+      - DOCBROKER_HOST=cs
+      - DOCBROKER_PORT=1489
+      - JMS_HOST=cs
+      - JMS_REMOTE_PORT=9084
+      - JMS_PORT=9080
+      - JMS_USER=admin
+      - JMS_PASSWORD=jboss
+      - DOCKER_HOST=192.168.0.57
 
   ijms:
-    image: 10.194.42.173:5000/ijms/centos/stateless/ijms:16.4.0000
+    image: ijms_centos:16.4.0000.0172
     hostname: ijms
     environment:
      - GLOBAL_REGISTRY_DOCBASE=xcprepo
@@ -261,7 +286,7 @@ services:
      - INSTALL_OWNER_USER=dmadmin
      - INSTALL_OWNER_PASSWORD=password     
      - APP_SERVER_PASSWORD=jboss     
-     - DOCKER_HOST=10.194.36.117
+     - DOCKER_HOST=192.168.0.57
      - DOCBASE_NAME=xcprepo
      - PRIMARY_LOG_LOCATION=/opt/dctm/dba/log
      - JMS_PORT=9180      

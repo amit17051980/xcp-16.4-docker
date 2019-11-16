@@ -32,13 +32,14 @@ echo "  xcp-xda/xcp-xda_16.4_Docker_Centos.tar"
 echo "  xcp-xplore/xPlore_Ubuntu.tar"
 echo "***********************************************************************"
 
-echo "Enter [Y or y] to continue, [N or n] to cancel (Default : [N/n])"
+echo "Enter [Y/y] to continue, [N/n] to cancel (Default : [N/n])"
 read input
 
 if [ "${input,,}" == "y" ]
 then
   echo "Great!"
   echo "Installation process.....[Starting]"
+  
   echo "Loading Docker Images (16.4)....."
   docker load -i xcp-apphost/xcp-apphost_16.4_docker_centos.tar
   docker load -i xcp-bam/xcp-bam_16.4_docker_centos.tar
@@ -52,6 +53,11 @@ then
   docker load -i xcp-xda/xcp-xda_16.4_Docker_Centos.tar
   docker load -i xcp-xplore/xPlore_Ubuntu.tar
   echo "Loading Docker Images (16.4).....DONE"
+  
+  echo "Composing the Docker Services (16.4)....."
+  docker-compose -f docker-compose.yml up -d
+  echo "Composing the Docker Services (16.4).....DONE"
+  
   echo "Installation process.....[Completed]"
 else
   echo "See you again!"  
