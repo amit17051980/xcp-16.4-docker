@@ -14,7 +14,7 @@ echo "##########################################################################
 echo "*******************"
 echo "Setting Directories"
 echo "*******************"
-chmod 775 **/*
+chmod -R 775 **
 
 echo "***********************************************************************"
 echo "Download and Copy the below Docker TAR Files from OpenText Support Site"
