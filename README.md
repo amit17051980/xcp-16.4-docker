@@ -2,6 +2,7 @@
 
 ## Pre-requisites
 
+```
 "***********************************************************************"
 "Download and Copy the below Docker TAR Files from OpenText Support Site"
 "***********************************************************************"
@@ -17,6 +18,7 @@
 "  xcp-xda/xcp-xda_16.4_Docker_Centos.tar"
 "  xcp-xplore/xPlore_Ubuntu.tar"
 "***********************************************************************"
+```
 
 ## Executables
 
